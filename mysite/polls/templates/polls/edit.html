@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<h1>Edit: {{ question }}</h1>
+
+<form action="{% url 'polls:edit' question.id %}" method="post">
+{% csrf_token %}
+
+{{ form.as_p }}
+
+<input type="submit" value="Send">
+</form>
+<a href="{% url 'polls:detail' question.id %}">Back</a>
+
+</body>
+</html>

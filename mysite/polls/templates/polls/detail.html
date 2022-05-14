@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<form action="{% url 'polls:vote' question.id %}" method="post">
+{% csrf_token %}
+<fieldset>
+    <legend><h1>{{ question.question_text }} <a href="{% url 'polls:edit' question.id %}">Edit</a></h1></legend>
+
+    {% if error_message %}
+    <p><strong>{{ error_message }}</strong></p>
+    {% endif %}
+
+    {% for choice in question.choice_set.all %}
+        <input type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice.id }}">
+        <label for="choice{{ forloop.counter }}">{{ choice.choice_text }}</label><br>
+
+    {% endfor %}
+<!--    Test input for POST method: <input type="text" name="account_name"><br>-->
+</fieldset>
+<input type="submit" value="Vote">
+</form>
+
+<h3>Choice Form</h3>
+<form action="{% url 'polls:detail' question.id %}" method="post">
+{% csrf_token %}
+
+{{ choice_form.as_p }}
+
+<input type="submit" value="Send">
+</form>
+
+<h3>Admin Choice Form</h3>
+<form action="{% url 'polls:detail' question.id %}" method="post">
+{% csrf_token %}
+
+{{ admin_choice_form.as_p }}
+
+<input type="submit" value="Send">
+
+</body>
+</html>
