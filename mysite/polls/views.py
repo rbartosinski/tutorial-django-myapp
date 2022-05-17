@@ -5,8 +5,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views import generic, View
 
-from .models import Question, Choice
-from .forms import QuestionForm, ChoiceForm, AdminChoiceForm
+from .models import Question, Choice, Person
+from .forms import QuestionForm, ChoiceForm, AdminChoiceForm, PersonForm
 
 
 class IndexView(View):
@@ -14,9 +14,11 @@ class IndexView(View):
     def get(self, request):
         form = QuestionForm()
         latest_question_list = Question.objects.filter(pub_date__lte=timezone.now()).order_by('-pub_date')[:5]
+        persons = Person.objects.all()
         context = {
             'latest_question_list': latest_question_list,
-            'form': form
+            'form': form,
+            'persons': persons
         }
         return render(request, 'polls/index.html', context)
 
@@ -56,27 +58,12 @@ class DetailView(View):
 
     def post(self, request, pk):
         question = get_object_or_404(Question, pk=pk)
-        admin_form = False
-        try:
-            request.POST['votes']
-            admin_form = True
-        except KeyError:
-            pass
-        if admin_form:
-            admin_choice_form = AdminChoiceForm(request.POST)
-            if admin_choice_form.is_valid():
-                Choice.objects.create(
-                    question=admin_choice_form.cleaned_data["question"],
-                    choice_text=admin_choice_form.cleaned_data["choice_text"],
-                    votes=admin_choice_form.cleaned_data["votes"],
-                )
-        else:
-            choice_form = ChoiceForm(request.POST)
-            if choice_form.is_valid():
-                Choice.objects.create(
-                    question=question,
-                    choice_text=choice_form.cleaned_data["choice_text"]
-                )
+        choice_form = ChoiceForm(request.POST)
+        if choice_form.is_valid():
+            Choice.objects.create(
+                question=question,
+                choice_text=choice_form.cleaned_data["choice_text"]
+            )
         return HttpResponseRedirect(reverse('polls:detail', args=(question.id,)))
 
 
@@ -131,6 +118,61 @@ class VoteView(View):
             selected_choice.votes += 1
             selected_choice.save()
             return HttpResponseRedirect(reverse('polls:results', args=(question.id,)))
+
+
+class DeleteView(View):
+
+    def get(self, request, pk):
+        question = get_object_or_404(Question, pk=pk)
+        question.delete()
+        return HttpResponseRedirect(reverse('polls:index'))
+
+
+class AdminChoiceView(View):
+
+    def get(self, request):
+        form = AdminChoiceForm()
+        context = {
+            "admin_choice_form": form
+        }
+        return render(request, 'polls/admin_choice.html', context)
+
+    def post(self, request):
+        admin_choice_form = AdminChoiceForm(request.POST)
+        if admin_choice_form.is_valid():
+            Choice.objects.create(
+                question=admin_choice_form.cleaned_data["question"],
+                choice_text=admin_choice_form.cleaned_data["choice_text"],
+                votes=admin_choice_form.cleaned_data["votes"],
+            )
+        else:
+            messages.error(request, "Form was not valid")
+        return HttpResponseRedirect(reverse('polls:index'))
+
+
+class AddPerson(View):
+
+    def get(self, request):
+        form = PersonForm()
+        context = {
+            "form": form
+        }
+        return render(request, 'polls/add_person.html', context)
+
+    def post(self, request):
+        form = PersonForm(request.POST)
+        if form.is_valid():
+            Person.objects.create(
+                name=form.cleaned_data["name"],
+                surname=form.cleaned_data["surname"],
+                gender=form.cleaned_data["gender"],
+                birth_date=form.cleaned_data["birth_date"],
+                position=form.cleaned_data["position"],
+                description=form.cleaned_data["description"],
+            )
+        else:
+            messages.error(request, "Form was not valid")
+        return HttpResponseRedirect(reverse('polls:index'))
 
 
 # def index(request):

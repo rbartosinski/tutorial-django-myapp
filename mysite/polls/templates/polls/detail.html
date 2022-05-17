@@ -34,13 +34,7 @@
 <input type="submit" value="Send">
 </form>
 
-<h3>Admin Choice Form</h3>
-<form action="{% url 'polls:detail' question.id %}" method="post">
-{% csrf_token %}
-
-{{ admin_choice_form.as_p }}
-
-<input type="submit" value="Send">
+<a href="{% url 'polls:admin_choice' %}">Admin choice</a>
 
 </body>
 </html>
