@@ -1,25 +1,44 @@
 from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.models import AnonymousUser, User, Group
+from django.db.models import Count
 from django.http import HttpResponse, Http404, HttpResponseRedirect
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.views import generic, View
 
 from .models import Question, Choice, Person
-from .forms import QuestionForm, ChoiceForm, AdminChoiceForm, PersonForm
+from .forms import QuestionForm, ChoiceForm, AdminChoiceForm, PersonForm, LoginForm, RegistrationForm, \
+    QuestionSearchForm
 
 
 class IndexView(View):
 
     def get(self, request):
         form = QuestionForm()
-        latest_question_list = Question.objects.filter(pub_date__lte=timezone.now()).order_by('-pub_date')[:5]
-        persons = Person.objects.all()
+        # latest_question_list = Question.objects.filter(pub_date__lte=timezone.now()).order_by('-pub_date')[:5]
+        # latest_question_list = Question.objects.all().exclude(question_text="Moje nowe pytanie")
+        # latest_question_list = Question.objects.order_by("question_text") # .all().order_by()
+        # latest_question_list = Question.objects.order_by("question_text")[:1] # .all().order_by()
+        # latest_question_list = Question.objects.order_by('pub_date').distinct('pub_date')
+        # latest_question_list = Question.objects.filter(question_text__startswith="jakie")
+        # latest_question_list = Question.objects.filter(id__lte=5)
+        latest_question_list = Question.objects.filter(question_text__contains="pytanie").filter(id__gte=5)
+        latest_question = Question.objects.latest('id')
+        print(latest_question.question_text)
+        # for i in latest_question_list:
+        #     print(i.question_text)
+        #     print(i.pub_date)
+        #     print(i.pk) # == i.id
         context = {
             'latest_question_list': latest_question_list,
             'form': form,
-            'persons': persons
         }
+        if not request.user.is_anonymous:
+            persons = Person.objects.all()
+            context["persons"] = persons
         return render(request, 'polls/index.html', context)
 
     def post(self, request):
@@ -38,7 +57,47 @@ class IndexView(View):
         return HttpResponseRedirect(reverse('polls:index'))
 
 
-class DetailView(View):
+class QuestionSearchView(View):
+
+    def get(self, request):
+        form = QuestionSearchForm()
+        context = {
+            'form': form
+        }
+        return render(request, 'polls/search.html', context)
+
+    def post(self, request):
+        form = QuestionSearchForm(request.POST)
+        results = None
+        if form.is_valid():
+
+            if form.cleaned_data["question_text"] != '':
+                results = Question.objects.filter(
+                    question_text__contains=form.cleaned_data["question_text"]
+                )
+            else:
+                pass
+
+            if not results:
+                if form.cleaned_data["pub_date"] != '':
+                    results = Question.objects.filter(
+                        pub_date=form.cleaned_data["pub_date"]
+                    )
+            else:
+                if form.cleaned_data["pub_date"] != '':
+                    results = Question.objects.filter(
+                        question_text__contains=form.cleaned_data["question_text"]
+                    ).filter(
+                        pub_date=form.cleaned_data["pub_date"]
+                    )
+        context = {
+            'form': form,
+            'results': results
+        }
+        return render(request, 'polls/search.html', context)
+
+
+class DetailView(LoginRequiredMixin, View):
 
     def get(self, request, pk):
         # question = get_object_or_404(Question, pk=pk)
@@ -67,7 +126,9 @@ class DetailView(View):
         return HttpResponseRedirect(reverse('polls:detail', args=(question.id,)))
 
 
-class EditView(View):
+class EditView(PermissionRequiredMixin, View):
+    permission_required = 'polls.change_question'
+    raise_exception = True
 
     def get(self, request, pk):
         question = get_object_or_404(Question, pk=pk)
@@ -93,7 +154,9 @@ class EditView(View):
         return HttpResponseRedirect(reverse('polls:detail', args=(question.id,)))
 
 
-class ResultsView(View):
+class ResultsView(PermissionRequiredMixin, View):
+    permission_required = 'polls.change_question'
+    raise_exception = True
 
     def get(self, request, pk):
         question = get_object_or_404(Question, pk=pk)
@@ -103,7 +166,9 @@ class ResultsView(View):
         return render(request, 'polls/results.html', context)
 
 
-class VoteView(View):
+class VoteView(PermissionRequiredMixin, View):
+    permission_required = 'polls.change_question'
+    raise_exception = True
 
     def post(self, request, pk):
         question = get_object_or_404(Question, pk=pk)
@@ -120,7 +185,9 @@ class VoteView(View):
             return HttpResponseRedirect(reverse('polls:results', args=(question.id,)))
 
 
-class DeleteView(View):
+class DeleteView(PermissionRequiredMixin, View):
+    permission_required = 'polls.change_question'
+    raise_exception = True
 
     def get(self, request, pk):
         question = get_object_or_404(Question, pk=pk)
@@ -128,7 +195,9 @@ class DeleteView(View):
         return HttpResponseRedirect(reverse('polls:index'))
 
 
-class AdminChoiceView(View):
+class AdminChoiceView(PermissionRequiredMixin, View):
+    permission_required = 'polls.change_choice'
+    raise_exception = True
 
     def get(self, request):
         form = AdminChoiceForm()
@@ -150,7 +219,9 @@ class AdminChoiceView(View):
         return HttpResponseRedirect(reverse('polls:index'))
 
 
-class AddPerson(View):
+class AddPerson(PermissionRequiredMixin, View):
+    permission_required = 'polls.change_question'
+    raise_exception = True
 
     def get(self, request):
         form = PersonForm()
@@ -162,7 +233,7 @@ class AddPerson(View):
     def post(self, request):
         form = PersonForm(request.POST)
         if form.is_valid():
-            Person.objects.create(
+            Person.objects.get_or_create(
                 name=form.cleaned_data["name"],
                 surname=form.cleaned_data["surname"],
                 gender=form.cleaned_data["gender"],
@@ -173,6 +244,75 @@ class AddPerson(View):
         else:
             messages.error(request, "Form was not valid")
         return HttpResponseRedirect(reverse('polls:index'))
+
+
+class LoginView(View):
+
+    def get(self, request):
+        form = LoginForm()
+        context = {
+            'form': form
+        }
+        return render(request, 'login.html', context)
+
+    def post(self, request):
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data["username"]
+            password = form.cleaned_data["password"]
+            user = authenticate(username=username, password=password)
+            if user:
+                login(request, user)
+                url = request.GET.get('next')
+                if url:
+                    return redirect(url)
+
+                return HttpResponseRedirect(reverse('polls:index'))
+
+            messages.error(request, "Username or password invalid")
+            return HttpResponseRedirect(reverse('polls:login'))
+
+        messages.error(request, "Form was not valid")
+        return HttpResponseRedirect(reverse('polls:login'))
+
+
+class LogoutView(View):
+
+    def get(self, request):
+        logout(request)
+        return HttpResponseRedirect(reverse('polls:login'))
+
+
+class RegistrationView(View):
+
+    def get(self, request):
+        form = RegistrationForm()
+        context = {
+            "form": form
+        }
+        return render(request, 'register.html', context)
+
+    def post(self, request):
+        form = RegistrationForm(request.POST)
+        if form.is_valid():
+            if form.cleaned_data["password"] == form.cleaned_data["password_conf"]:
+                try:
+                    User.objects.get(username=form.cleaned_data["username"])
+                    messages.error(request, "User already exists")
+                    return HttpResponseRedirect(reverse("polls:registration"))
+                except User.DoesNotExist:
+                    user = User.objects.create_user(
+                        username=form.cleaned_data["username"],
+                        password=form.cleaned_data["password"],
+                        email=form.cleaned_data["email"]
+                    )
+                    group = Group.objects.get(name='standard')
+                    user.groups.add(group)
+                    login(request, user)
+                    return HttpResponseRedirect(reverse("polls:index"))
+            else:
+                messages.error(request, "Passwords are wrong!")
+                return HttpResponseRedirect(reverse("polls:registration"))
 
 
 # def index(request):

@@ -1,15 +1,7 @@
-<!DOCTYPE html>
-{% load static %}
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>My polls app</title>
-</head>
-<body>
-<link rel="stylesheet" type="text/css" href="{% static 'polls/style.css' %}">
-{% if messages %}
-<h2>{{ message }}</h2>
-{% endif %}
+{% extends 'polls/base.html' %}
+{% block title %}Home{% endblock %}
+{% block content %}
+{% load gender_filter %}
 
 {% if latest_question_list %}
     <ul>
@@ -21,6 +13,9 @@
     <p>No polls are available.</p>
 {% endif %}
 
+<a href="{% url 'polls:search' %}"><h4>Search question</h4></a>
+
+{% if user.is_authenticated %}
 <h3>Create new question</h3>
 
 <form action="{% url 'polls:index' %}" method="post">
@@ -31,15 +26,17 @@
 <input type="submit" value="Send">
 </form>
 
+
 {% if persons %}
 {% for p in persons %}
-{{ forloop.counter }}. {{ p.name }} {{ p.surname }}; {% if p.birth_date %}{{ p.birth_date }},{% else %}{% endif %} {{ p.gender }} <br>
+{{ forloop.counter }}. {{ p.name }} {{ p.surname }}; {% if p.birth_date %}{{ p.birth_date }},{% else %}{% endif %}
+{{ p.gender|custom_gender }} <br>
 {% endfor %}
 {% else %}
 No persons to show.<br>
 {% endif %}
-<a href="{% url 'polls:add_person' %}">Add new person</a>
+<a href="{% url 'polls:add_person' %}">Add new person</a><br>
 
+{% endif %}
 
-</body>
-</html>
+{% endblock %}

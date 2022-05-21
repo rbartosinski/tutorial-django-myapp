@@ -1,10 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'polls/base.html' %}
+{% block content %}
 
 <h3>Admin Choice Form</h3>
 <form action="{% url 'polls:admin_choice' %}" method="post">
@@ -13,6 +8,6 @@
 {{ admin_choice_form.as_p }}
 
 <input type="submit" value="Send">
+</form>
 
-</body>
-</html>
+{% endblock %}

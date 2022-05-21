@@ -1,0 +1,25 @@
+{% extends 'polls/base.html' %}
+{% block content %}
+
+<h1>Search question</h1>
+
+<form action="{% url 'polls:search' %}" method="post">
+{% csrf_token %}
+
+{{ form }}
+
+<input type="submit" value="Search">
+</form>
+
+{% if results %}
+{% for question in results %}
+<li><a href="{% url 'polls:detail' question.id %}">{{ question.question_text }}</a>
+    {% endfor %}
+{% else %}
+No questions with specified parameters.
+{% endif %}
+    <br>
+    <br>
+<a href="{% url 'polls:index' %}">Back</a>
+
+{% endblock %}

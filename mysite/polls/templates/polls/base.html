@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The polls app - {% block title %}{% endblock %}</title>
+</head>
+<body>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'polls/style.css' %}">
+
+{% if user.is_authenticated %}
+Username: {{ user }}
+<a href="{% url 'polls:logout' %}">Logout</a> <br>
+{% else %}
+Please, <a href="{% url 'polls:login' %}">login</a> or <a href="{% url 'polls:registration' %}">create account</a>.
+{% endif %}
+<a href="{% url 'polls:index' %}">Home</a>
+
+{% if messages %}
+{% for message in messages %}
+<h4>{{ message.tags }}: {{ message }}</h4>
+{% endfor %}
+{% endif %}
+
+{% block content %}
+{% endblock %}
+
+
+
+</body>
+</html>

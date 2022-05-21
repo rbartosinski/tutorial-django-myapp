@@ -12,6 +12,10 @@ urlpatterns = [
     path('<int:pk>/delete/', views.DeleteView.as_view(), name='delete'),
     path('admin_choice/', views.AdminChoiceView.as_view(), name='admin_choice'),
     path('add_person/', views.AddPerson.as_view(), name='add_person'),
+    path('search/', views.QuestionSearchView.as_view(), name='search'),
     # path('', views.index, name='index'),
     # path('<int:question_id>/<int:q_id>/<str:quest_id>/', views.detail, name='detail'),
+    path('accounts/login/', views.LoginView.as_view(), name="login"),
+    path('accounts/logout/', views.LogoutView.as_view(), name="logout"),
+    path('register/', views.RegistrationView.as_view(), name="registration"),
 ]

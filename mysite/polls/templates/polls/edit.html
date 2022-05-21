@@ -1,10 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'polls/base.html' %}
+{% block content %}
 
 <h1>Edit: {{ question }}</h1>
 
@@ -17,5 +12,4 @@
 </form>
 <a href="{% url 'polls:detail' question.id %}">Back</a>
 
-</body>
-</html>
+{% endblock %}
