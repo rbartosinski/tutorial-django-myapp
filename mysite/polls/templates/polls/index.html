@@ -2,6 +2,7 @@
 {% block title %}Home{% endblock %}
 {% block content %}
 {% load gender_filter %}
+{% load bootstrap %}
 
 {% if latest_question_list %}
     <ul>
@@ -21,9 +22,9 @@
 <form action="{% url 'polls:index' %}" method="post">
 {% csrf_token %}
 
-{{ form.as_p }}
+{{ form|bootstrap }}
 
-<input type="submit" value="Send">
+<input type="submit" value="Send" class="btn btn-primary">
 </form>
 
 
@@ -35,7 +36,7 @@
 {% else %}
 No persons to show.<br>
 {% endif %}
-<a href="{% url 'polls:add_person' %}">Add new person</a><br>
+<a href="{% url 'polls:add_person' %}"><button type="button" class="btn btn-success">Add new person</button></a><br>
 
 {% endif %}
 
