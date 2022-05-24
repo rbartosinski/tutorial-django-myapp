@@ -70,26 +70,21 @@ class QuestionSearchView(View):
         form = QuestionSearchForm(request.POST)
         results = None
         if form.is_valid():
-
-            if form.cleaned_data["question_text"] != '':
+            if form.cleaned_data["question_text"] != '' and form.cleaned_data["pub_date"] is not None:
                 results = Question.objects.filter(
                     question_text__contains=form.cleaned_data["question_text"]
-                )
-            else:
-                pass
-
-            if not results:
-                if form.cleaned_data["pub_date"] != '':
-                    results = Question.objects.filter(
-                        pub_date=form.cleaned_data["pub_date"]
-                    )
-            else:
-                if form.cleaned_data["pub_date"] != '':
-                    results = Question.objects.filter(
-                        question_text__contains=form.cleaned_data["question_text"]
                     ).filter(
                         pub_date=form.cleaned_data["pub_date"]
                     )
+            elif form.cleaned_data["question_text"] != '':
+                results = Question.objects.filter(
+                    question_text__contains=form.cleaned_data["question_text"]
+                )
+            elif form.cleaned_data["pub_date"] is not None:
+                results = Question.objects.filter(
+                    pub_date=form.cleaned_data["pub_date"]
+                )
+
         context = {
             'form': form,
             'results': results
@@ -270,17 +265,17 @@ class LoginView(View):
                 return HttpResponseRedirect(reverse('polls:index'))
 
             messages.error(request, "Username or password invalid")
-            return HttpResponseRedirect(reverse('polls:login'))
+            return HttpResponseRedirect(reverse('login'))
 
         messages.error(request, "Form was not valid")
-        return HttpResponseRedirect(reverse('polls:login'))
+        return HttpResponseRedirect(reverse('login'))
 
 
 class LogoutView(View):
 
     def get(self, request):
         logout(request)
-        return HttpResponseRedirect(reverse('polls:login'))
+        return HttpResponseRedirect(reverse('login'))
 
 
 class RegistrationView(View):
@@ -299,7 +294,7 @@ class RegistrationView(View):
                 try:
                     User.objects.get(username=form.cleaned_data["username"])
                     messages.error(request, "User already exists")
-                    return HttpResponseRedirect(reverse("polls:registration"))
+                    return HttpResponseRedirect(reverse("registration"))
                 except User.DoesNotExist:
                     user = User.objects.create_user(
                         username=form.cleaned_data["username"],
@@ -312,7 +307,7 @@ class RegistrationView(View):
                     return HttpResponseRedirect(reverse("polls:index"))
             else:
                 messages.error(request, "Passwords are wrong!")
-                return HttpResponseRedirect(reverse("polls:registration"))
+                return HttpResponseRedirect(reverse("registration"))
 
 
 # def index(request):

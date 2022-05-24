@@ -15,7 +15,7 @@ urlpatterns = [
     path('search/', views.QuestionSearchView.as_view(), name='search'),
     # path('', views.index, name='index'),
     # path('<int:question_id>/<int:q_id>/<str:quest_id>/', views.detail, name='detail'),
-    path('accounts/login/', views.LoginView.as_view(), name="login"),
-    path('accounts/logout/', views.LogoutView.as_view(), name="logout"),
-    path('register/', views.RegistrationView.as_view(), name="registration"),
+    # path('accounts/login/', views.LoginView.as_view(), name="login"),
+    # path('accounts/logout/', views.LogoutView.as_view(), name="logout"),
+    # path('register/', views.RegistrationView.as_view(), name="registration"),
 ]
